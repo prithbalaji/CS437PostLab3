@@ -17,7 +17,10 @@ of the device sending the packets.
 # Variables to be modified
 dev_mac = ""  # Assigned transmitter MAC
 iface_n = "wlan1"  # Interface for network adapter
-duration = 5  #1Number of seconds to sniff for
+duration = 15
+
+
+#1Number of seconds to sniff for
 #file_name = "new.csv"  # Name of CSV file where RSSI values are stored
 
 sense=SenseHat()
@@ -29,7 +32,7 @@ filename=path+timestamp_fname+".csv"
 def create_rssi_file():
     """Create and prepare a file for RSSI values"""
     #header = ["date", "time", "dest", "src", "rssi"]
-    header = ['x','y', 'RSSI', 'Timestamp']
+    header = ["Timestamp", 'x','y', 'z', 'gyrox', 'gyroy', 'gyroz']
     with open(filename, "w", encoding="UTF8") as f:
         writer = csv.writer(f)
         writer.writerow(header)
@@ -58,18 +61,21 @@ def captured_packet_callback(pkt):
     mag=sense.get_compass_raw()  ## returns float values representing magnetic intensity of the ais in microTeslas
 
     x=accel['x']
-
     y=accel['y']
     z=accel['z']
+    a1 = gyro['x']
+    b1 = gyro['y']
+    c1 = gyro['z']
     timestamp=datetime.now().strftime("%H:%M:%S")
     #entry= str(time.time())+","+timestamp+","+str(x)+","+str(y)+","+str(z)+","+ str(gyro['x'])+ ","+str(gyro['y'])+","+ str(gyro['z'])+ ","+ str(mag['x'])+ ","+str(mag['y'])+","+ str(mag['z'])+"\n"
-    
+    #if cur_dict['mac_2'] == "e4:5f:01:d4:9c:b1":
+    print("rssi", cur_dict['rssi'])
     #data_tuple = (x, y, cur_dict['rssi'], timestamp)
     
     if os.path.isfile(filename):
         with open(filename, 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow([x, y, cur_dict['rssi'], time])
+            writer.writerow([time, x, y, z, a1,b1,c1])
     else:
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
