@@ -17,7 +17,7 @@ of the device sending the packets.
 # Variables to be modified
 dev_mac = ""  # Assigned transmitter MAC
 iface_n = "wlan1"  # Interface for network adapter
-duration = 30  #1Number of seconds to sniff for
+duration = 25  #1Number of seconds to sniff for
 #file_name = "new.csv"  # Name of CSV file where RSSI values are stored
 
 sense=SenseHat()
@@ -25,8 +25,16 @@ path="/home/pi/Desktop/lab3/IMU/newdata/"
 timestamp_fname=datetime.now().strftime("%H:%M:%S")
 sense.set_imu_config(True,True,True) ## Config the Gyroscope, Accelerometer, Magnetometer
 filename=path+timestamp_fname+".csv"
+smoothed_filename = path+"smoothed_"+timestamp_fname+".csv"
+raw_x_values = []
+raw_y_values = []
+smoothed_x_values = []
+smoothed_y_values = []
+window_size = 10
+window_values = [0]*window_size
 
 max_rssi = (0,0,-1000)
+rssi_vals = []
 
 def create_rssi_file():
     """Create and prepare a file for RSSI values"""
@@ -57,13 +65,28 @@ def captured_packet_callback(pkt):
     time = date_time[1]
     
     accel=sense.get_accelerometer_raw()  ## returns float values representing acceleration intensity in Gs
-    gyro=sense.get_gyroscope_raw()  ## returns float values representing rotational intensity of the axis in radians per second
-    mag=sense.get_compass_raw()  ## returns float values representing magnetic intensity of the ais in microTeslas
+    #gyro=sense.get_gyroscope_raw()  ## returns float values representing rotational intensity of the axis in radians per second
+    #mag=sense.get_compass_raw()  ## returns float values representing magnetic intensity of the ais in microTeslas
 
     x=accel['x']
 
     y=accel['y']
     z=accel['z']
+    
+    raw_x_values.append(x)
+    raw_y_values.append(y)
+    
+    window_values.pop(0) 
+    window_values.append(x)
+    smoothed_x = sum(window_values) / window_size
+
+    window_values.pop(0)
+    window_values.append(y)
+    smoothed_y = sum(window_values) / window_size
+
+    smoothed_x_values.append(smoothed_x)
+    smoothed_y_values.append(smoothed_y)
+    rssi_vals.append(cur_dict['rssi'])
    # print("cur d-", cur_dict)
     #if cur_dict['mac_1'] == 'e4:5f:01:d4:9f:f9'
     new_tuple = (x, y, cur_dict['rssi'])
@@ -91,6 +114,13 @@ if __name__ == "__main__":
 
     time.sleep(duration)
     t.stop()
+    with open(smoothed_filename, 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['x', 'y', 'RSSI'])
+        for i in range(len(rssi_vals)):
+            writer.writerow([smoothed_x_values[i], smoothed_y_values[i],rssi_vals[i]])
+
+       # writer.writerow([x, y, cur_dict['rssi']])
 
     print("Start Time: ", start_date_time)
 
