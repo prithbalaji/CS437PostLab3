@@ -1,4 +1,0 @@
-
-- Postlab 1 advanced fusion method, walking straegieis, define environment, video
-- Postlab 2 data cleaning and data interpolation, compare with baseline, video
-- Postlab 3 guidance algorithm,reinforcement,video
